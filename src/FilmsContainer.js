@@ -9,7 +9,7 @@ class FilmsContainer extends Component {
         this.state = {
             loading: true,
             films: [],
-            cached_films: []
+            filter: ''
         };
         this.filterFilms = this.filterFilms.bind(this);
     }
@@ -23,8 +23,7 @@ class FilmsContainer extends Component {
         const data = await res.json();
         this.setState({
             loading: false,
-            films: data['results'],
-            cached_films: data['results']
+            films: data['results']
         })
     }
 
@@ -32,18 +31,19 @@ class FilmsContainer extends Component {
         if (this.state.loading) {
             return (<Loading/>)
         }
-        return <FilmsList films={this.state.films} onFilterFilms={this.filterFilms}/>
+        const {films, filter} = this.state;
+        const filteredFilms = filter? films.filter(film => film.title.includes(filter) || film.director.includes(filter)) : films;
+        return <><input type="text" name="filter" onChange={this.filterFilms}/>
+                <FilmsList films={filteredFilms}/>
+            </>;
     }
 
     filterFilms(event) {
         event.preventDefault();
         const value = event.target.value;
-        if (value) {
-            const all_films = this.state.cached_films;
-            this.setState({
-                films: all_films.filter(film => film.title === value || film.director === value)
-            });
-        }
+        this.setState({
+            filter: value
+        })
     }
 
 }
