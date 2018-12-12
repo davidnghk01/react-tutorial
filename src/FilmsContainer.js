@@ -1,51 +1,46 @@
 import React, { Component } from 'react';
+import { connect } from "react-redux";
 import FilmsList from './FilmsList';
 import Loading from './Loading';
 
+import {fetchFilms, filterFilm} from "./actions";
 
 class FilmsContainer extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            loading: true,
-            films: [],
-            filter: ''
-        };
-        this.filterFilms = this.filterFilms.bind(this);
-    }
-
     componentDidMount() {
-        this.fetchStarwarFlims()
+        this.props.fetchFilms()
+    }
+    componentWillUnmount() {
+        //
     }
 
-    async fetchStarwarFlims() {
-        const res = await fetch("https://swapi.co/api/films/");
-        const data = await res.json();
-        this.setState({
-            loading: false,
-            films: data['results']
-        })
-    }
-
-    render() {
-        if (this.state.loading) {
-            return (<Loading/>)
-        }
-        const {films, filter} = this.state;
-        const filteredFilms = filter? films.filter(film => film.title.includes(filter) || film.director.includes(filter)) : films;
-        return <><input type="text" name="filter" onChange={this.filterFilms}/>
-                <FilmsList films={filteredFilms}/>
-            </>;
-    }
-
-    filterFilms(event) {
+    onChange = (event) => {
         event.preventDefault();
         const value = event.target.value;
-        this.setState({
-            filter: value
-        })
-    }
+        this.props.filterFilm(value);
+    };
 
+    render() {
+        const {films} = this.props;
+        if (!films) {
+            return (<Loading/>)
+        }
+        return <><input type="text" name="filter" onChange={this.onChange}/>
+                <FilmsList films={films}/>
+            </>;
+    }
 }
 
-export default FilmsContainer;
+const getFilteredFilms = (state) => {
+    const {films, filterFilms:filter} = state;
+    return films.filter(film => film.title.includes(filter) || film.director.includes(filter));
+};
+
+const mapStateToProps = (state, ownProps) => ({ films: getFilteredFilms(state) });
+
+const mapDispatchToProps = {
+    filterFilm,
+    fetchFilms
+};
+
+export default connect(mapStateToProps,
+    mapDispatchToProps)(FilmsContainer);
